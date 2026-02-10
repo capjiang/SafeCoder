@@ -17,6 +17,8 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output_name', type=str, required=True)
     parser.add_argument('--model_name', type=str, default=None)
+    parser.add_argument('--local-model-path', type=str, default=None)
+    parser.add_argument('--local-lora-path', type=str, default=None)
 
     parser.add_argument('--eval_type', type=str, choices=['trained', 'trained-new', 'not-trained'], default='trained')
     parser.add_argument('--sec_prompting', type=str, choices=['none', 'generic', 'specific'], default='none')

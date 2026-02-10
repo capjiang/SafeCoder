@@ -164,7 +164,7 @@ class CodeDataset(Dataset):
             tokens_complete_bad, weights_complete_bad = prepd_j['tokens_before'], prepd_j['weights_before']
         else:
             instruction = PROMPT_NO_INPUT.format(instruction=j['description'])
-            instruction_tokenized = self.tokenizer.encode_plus(instruction).data['input_ids']
+            instruction_tokenized = self.tokenizer(instruction)["input_ids"]
             instruction_weights = [0] * len(instruction_tokenized)
 
             tokens_complete_good, weights_complete_good = instruction_tokenized + prepd_j['tokens_after_trimmed'], instruction_weights + prepd_j['weights_after_trimmed']
@@ -198,12 +198,12 @@ class CodeDataset(Dataset):
         :param j: (dict) JSON dict containing the security dataset example.
         :return: (dict) Return dictionary as described above.
         """
-        be_before = self.tokenizer.encode_plus(j['func_src_before'])
-        tokens_before = be_before.data['input_ids']
+        be_before = self.tokenizer(j['func_src_before'])
+        tokens_before = be_before["input_ids"]
         tokens_before_str = [str(t) for t in tokens_before]
 
-        be_after = self.tokenizer.encode_plus(j['func_src_after'])
-        tokens_after = be_after.data['input_ids']
+        be_after = self.tokenizer(j['func_src_after'])
+        tokens_after = be_after["input_ids"]
         tokens_after_str = [str(t) for t in tokens_after]
 
         diffs = difflib.ndiff(tokens_before_str, tokens_after_str, linejunk=None, charjunk=None)
@@ -261,8 +261,8 @@ class CodeDataset(Dataset):
             else:
                 prompt = PROMPT_INPUT.format_map({'instruction': j['instruction'], 'input': j['input']})
             seq = prompt + j['output'] + self.tokenizer.eos_token
-            be = self.tokenizer.encode_plus(seq)
-            tokens = be.data['input_ids']
+            be = self.tokenizer(seq, return_offsets_mapping=True)
+            tokens = be["input_ids"]
             weights = [0] * len(tokens)
             token_start_idx = be.char_to_token(len(prompt) - 1) + 1
             for token_idx in range(token_start_idx, len(tokens)):

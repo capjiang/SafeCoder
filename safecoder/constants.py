@@ -220,6 +220,9 @@ PRETRAINED_MODELS = {
     'llama2-7b': 'meta-llama/Llama-2-7b-hf',
     'mistral-7b-chat': 'mistralai/Mistral-7B-Instruct-v0.1',
     'llama2-7b-chat': 'meta-llama/Llama-2-7b-chat-hf',
+    'llama3-8b-local': '/root/private_data/SothisAI/model/Aihub/Meta-Llama-3-8B-Instruct/main/Meta-Llama-3-8B-Instruct/meta-llama/Meta-Llama-3-8B-Instruct',
+    'starcoderbase-1b-local': '/home/cap/data/llm/bigcode/starcoderbase-1b',
+    'starcoderbase-1b-safecoder': '/home/cap/data/llm/bigcode/starcoderbase-1b-safecoder/checkpoint-last',
 }
 
 CHAT_MODELS = {

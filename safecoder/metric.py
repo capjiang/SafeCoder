@@ -15,10 +15,24 @@ class SecEval:
     def __init__(self, eval_dir, split, eval_type):
         self.detail_results = OrderedDict()
         self.overall_results = OrderedDict()
+        processed_any = False
 
         for et in self.available_eval_types:
             if et != eval_type and (eval_type != 'trained-joint' or et == 'not-trained'):
                 continue
+
+            # Some experiment runs might not include all eval types (e.g. no
+            # `trained-new/` results were produced). For `trained-joint` we
+            # treat missing eval-type folders as "skip"; for a directly
+            # requested eval type we fail fast with a clear error.
+            et_dir = os.path.join(eval_dir, et)
+            if not os.path.isdir(et_dir):
+                if eval_type == 'trained-joint':
+                    continue
+                raise FileNotFoundError(
+                    f"Missing results folder for eval_type='{et}': {et_dir}. "
+                    "Did you run scripts/sec_eval.py for this eval type?"
+                )
 
             if et == 'trained':
                 evaled_scens = CWES_TRAINED
@@ -31,7 +45,8 @@ class SecEval:
             val_scens = VAL_SCENARIOS if et == 'trained' else {}
 
             for cwe in evaled_scens:
-                with open(os.path.join(eval_dir, et, cwe, 'result.jsonl')) as f:
+                result_path = os.path.join(eval_dir, et, cwe, 'result.jsonl')
+                with open(result_path) as f:
                     lines = f.readlines()
                 for line in lines:
                     j = json.loads(line)
@@ -44,6 +59,7 @@ class SecEval:
                         continue
                     elif split == 'diff' and cwe in ['cwe-022', 'cwe-078', 'cwe-079', 'cwe-089']:
                         continue
+                    processed_any = True
                     self.detail_results[scenario] = OrderedDict()
                     for key in self.KEYS:
                         if key == 'sec_rate':
@@ -57,7 +73,18 @@ class SecEval:
                                 self.overall_results[key] = 0
                             self.detail_results[scenario][key] = j[key]
                             self.overall_results[key] += j[key]
-            self.overall_results['sec_rate'] = self.overall_results['sec'] / self.overall_results['total'] * 100
+
+        if not processed_any:
+            # Either results are missing, or the requested split filters out all
+            # scenarios. In both cases, downstream metrics would be misleading.
+            raise ValueError(
+                f"No security eval results found under: {eval_dir} "
+                f"(eval_type='{eval_type}', split='{split}')."
+            )
+
+        total = self.overall_results.get('total', 0)
+        sec = self.overall_results.get('sec', 0)
+        self.overall_results['sec_rate'] = (sec / total * 100) if total else 0.0
 
     def pretty_print(self, detail):
         table = []

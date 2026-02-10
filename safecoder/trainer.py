@@ -4,7 +4,9 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 from collections import OrderedDict
-from transformers import AdamW, get_linear_schedule_with_warmup
+# from transformers import AdamW, get_linear_schedule_with_warmup
+from torch.optim import AdamW
+from transformers import get_linear_schedule_with_warmup
 from peft import LoraConfig, get_peft_model, LoraConfig, TaskType
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 

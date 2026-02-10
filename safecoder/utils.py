@@ -42,12 +42,12 @@ def set_logging(args, log_file):
     args.logger = logger
 
 def visualize_pair(src_before, src_after, tokenizer):
-    be_before = tokenizer.encode_plus(src_before)
-    tokens_before = be_before.data['input_ids']
+    be_before = tokenizer(src_before)
+    tokens_before = be_before["input_ids"]
     tokens_before_str = list(map(lambda i: str(i), tokens_before))
 
-    be_after = tokenizer.encode_plus(src_after)
-    tokens_after = be_after.data['input_ids']
+    be_after = tokenizer(src_after)
+    tokens_after = be_after["input_ids"]
     tokens_after_str = list(map(lambda i: str(i), tokens_after))
 
     diffs = difflib.ndiff(tokens_before_str, tokens_after_str, linejunk=None, charjunk=None)
@@ -79,6 +79,17 @@ def load_model(model_name, args):
     This load function will only work for lora models if they are saved in the following pattern:
         <pretrained_base_model_name>-lora<whatever_else>
     """
+    local_model_path = getattr(args, 'local_model_path', None)
+    local_lora_path = getattr(args, 'local_lora_path', None)
+    if local_model_path:
+        tokenizer_path = local_lora_path if local_lora_path else local_model_path
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        model = AutoModelForCausalLM.from_pretrained(local_model_path, device_map='auto', trust_remote_code=True)
+        model.resize_token_embeddings(len(tokenizer))
+        if local_lora_path:
+            model = PeftModel.from_pretrained(model, local_lora_path)
+            model = model.merge_and_unload()
+        return tokenizer, model
     if '-lora' in model_name:
 
         pretrained_name = model_name.split('-lora')[0]
